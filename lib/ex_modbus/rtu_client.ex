@@ -41,8 +41,8 @@ defmodule ExModbus.RtuClient do
 
   # GenServer Callbacks
 
-  def init(%{tty: tty, speed: speed}) do
-     {:ok, uart_pid} = Nerves.UART.start_link
+  def init(args = %{tty: tty, speed: speed}) do
+     {:ok, uart_pid} = Nerves.UART.start_link(name: args[:uart_name])
      Nerves.UART.open(uart_pid, tty, speed: speed, active: false)
      Nerves.UART.configure(uart_pid, framing: {ExModbus.Nerves.UART.Framing.Modbus, slave_id: 1})
      {:ok, uart_pid}
