@@ -38,6 +38,7 @@ defmodule ExModbus.Nerves.UART.Framing.ModbusDebug do
   # and an implementation detail that ought be handled upstream with my other
   # Modbus function
   def add_framing(data, state) do
+    Logger.debug "modbus add_framing, data: #{inspect data}, state: #{inspect state}"
     {:ok, data, state}
   end
 
@@ -94,14 +95,23 @@ defmodule ExModbus.Nerves.UART.Framing.ModbusDebug do
     Logger.debug "modbus process_data_improved first byte, slave_id: #{inspect slave_id}, other_data: #{inspect other_data}, state: #{inspect state}"
     # @TODO: raise error if slave_id != state.slave_id
     new_state = %{state | slave_id: slave_id, line_index: 1, in_process: <<slave_id>>}
-    if byte_size(other_data) > 0, do: process_data_improved(other_data, nil, <<slave_id>>, new_state), else: new_state
+    resp = if byte_size(other_data) > 0 do
+      Logger.debug "modbus process_data_improved there is some more data, continue processing..."
+      process_data_improved(other_data, nil, <<slave_id>>, new_state)
+    else
+      Logger.debug "modbus process_data_improved we are done now"
+      new_state
+    end
+    Logger.debug "modbus process_data_improved final response: #{inspect resp}"
+    resp
   end
 
   # get second byte (function code) (linx_index 1)
   defp process_data_improved(<<function_code::size(8), other_data::binary>>, nil, in_process, %{line_index: 1} = state) do
-    Logger.debug "modbus process_data_improved second_byte, function_code: #{inspect function_code}, other_data: #{inspect other_data}, state: #{inspect state}"
+    Logger.debug "modbus process_data_improved second_byte (function code), function_code: #{inspect function_code}, other_data: #{inspect other_data}, state: #{inspect state}"
     new_state = %{state | function_code: function_code, line_index: 2, in_process: in_process <> <<function_code>>}
     new_state = if byte_size(other_data) > 0 do
+      Logger.debug "modbus process_data_improved there is some more data, keep processing..."
       process_data_improved(other_data, nil,  <<state.slave_id, function_code>>, new_state)
     else
       new_state
@@ -120,6 +130,13 @@ defmodule ExModbus.Nerves.UART.Framing.ModbusDebug do
   # write multiple registers (function code 16)
   defp process_data_improved(other_data, nil, _in_process, %{line_index: 2, function_code: 16} = state) do
     Logger.debug "modbus process_data_improved write multiple registers, other_data: #{inspect other_data}, state: #{inspect state}"
+    new_state = %{state | expected_length: 8, line_index: 3, in_process: state.in_process <> <<state.slave_id, state.function_code>>}
+    process_data_improved(other_data, 8, <<state.slave_id, new_state.function_code>>, new_state)
+  end
+
+  # write_single_coil (function code 5)
+  defp process_data_improved(other_data, nil, _in_process, %{line_index: 2, function_code: 5} = state) do
+    Logger.debug "modbus process_data_improved write single coil, other_data: #{inspect other_data}, state: #{inspect state}"
     new_state = %{state | expected_length: 8, line_index: 3, in_process: state.in_process <> <<state.slave_id, state.function_code>>}
     process_data_improved(other_data, 8, <<state.slave_id, new_state.function_code>>, new_state)
   end

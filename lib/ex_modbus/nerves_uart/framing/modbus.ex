@@ -98,6 +98,12 @@ defmodule ExModbus.Nerves.UART.Framing.Modbus do
     process_data_improved(other_data, 8, <<state.slave_id, new_state.function_code>>, new_state)
   end
 
+  # write_single_coil (function code 5)
+  defp process_data_improved(other_data, nil, _in_process, %{line_index: 2, function_code: 5} = state) do
+    new_state = %{state | expected_length: 8, line_index: 3, in_process: state.in_process <> <<state.slave_id, state.function_code>>}
+    process_data_improved(other_data, 8, <<state.slave_id, new_state.function_code>>, new_state)
+  end
+
   # read multiple registers error (function code 131)
   defp process_data_improved(other_data, nil, _in_process, %{line_index: 2, function_code: 131} = state) do
     new_state = %{state | expected_length: 5, error: true, error_message: :modbus_exception, line_index: 3, in_process: state.in_process <> <<state.slave_id, state.function_code>>}
