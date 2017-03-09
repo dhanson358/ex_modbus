@@ -41,11 +41,28 @@ defmodule ExModbus.RtuClient do
 
   # GenServer Callbacks
 
-  def init(%{tty: tty, speed: speed}) do
-     {:ok, uart_pid} = Nerves.UART.start_link
+  def init(args = %{tty: tty, speed: speed}) do
+     {:ok, uart_pid} = Nerves.UART.start_link(name: args[:uart_name])
      Nerves.UART.open(uart_pid, tty, speed: speed, active: false)
      Nerves.UART.configure(uart_pid, framing: {ExModbus.Nerves.UART.Framing.Modbus, slave_id: 1})
      {:ok, uart_pid}
+  end
+
+  def enable_debug_framing(pid \\ :rtu_client) do
+    set_framer(pid, ExModbus.Nerves.UART.Framing.ModbusDebug)
+  end
+
+  def disable_debug_framing(pid \\ :rtu_client) do
+    set_framer(pid, ExModbus.Nerves.UART.Framing.Modbus)
+  end
+
+  def set_framer(pid, framer) do
+    GenServer.call(pid, {:set_framer, framer})
+  end
+
+  def handle_call({:set_framer, framer}, _from, uart_pid) do
+    Nerves.UART.configure(uart_pid, framing: {framer, slave_id: 1})
+    {:reply, nil, uart_pid}
   end
 
   def handle_call({:read_coils, %{slave_id: slave_id, start_address: address, count: count, timeout: timeout}}, _from, serial) do
