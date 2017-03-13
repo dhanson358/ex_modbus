@@ -2,5 +2,5 @@
   "elixir_make": {:hex, :elixir_make, "0.3.0", "285147fa943806eee82f6680b7b446b5569bcf3ee8328fa0a7c200ffc44fbaba", [:mix], []},
   "elixir_serial": {:git, "https://github.com/bitgamma/elixir_serial", "0ea4220a2a44451f33b20cb2a71adb4265b29d61", [tag: "v0.1.2"]},
   "ex_doc": {:hex, :ex_doc, "0.11.5", "0dc51cb84f8312162a2313d6c71573a9afa332333d8a332bb12540861b9834db", [:mix], [{:earmark, "~> 0.1.17 or ~> 0.2", [hex: :earmark, optional: true]}]},
-  "nerves_uart": {:git, "https://github.com/dhanson358/nerves_uart", "217383bcb03faa9089dadd88f4252f8dbd771b2d", []},
+  "nerves_uart": {:hex, :nerves_uart, "0.1.1", "32e6186b1a1b1d744631126df0b6c4049ddde5b04bc0303de29ab86a2edf60a2", [:make, :mix], [{:elixir_make, "~> 0.3", [hex: :elixir_make, optional: false]}]},
   "serial": {:git, "https://github.com/bitgamma/elixir_serial", "0ea4220a2a44451f33b20cb2a71adb4265b29d61", [tag: "v0.1.2"]}}
